@@ -80,6 +80,24 @@ describe('parseScriptParts', () => {
     const result = parseScriptParts(scriptPath);
     expect(result).toEqual(['/bin/bash', 'script.sh']);
   });
+
+  it('should keep quotes in the middle of a token together', () => {
+    const scriptPath = `node args.js --name="John Smith" --x='a b' --empty=""`;
+    const result = parseScriptParts(scriptPath);
+    expect(result).toEqual(['node', 'args.js', '--name=John Smith', '--x=a b', '--empty=']);
+  });
+
+  it('should pass empty quotes through as empty arguments', () => {
+    const scriptPath = `node args.js "" ''`;
+    const result = parseScriptParts(scriptPath);
+    expect(result).toEqual(['node', 'args.js', '', '']);
+  });
+
+  it('should concatenate quoted and unquoted sections within one token', () => {
+    const scriptPath = `node script.js pre"quoted mid"post 'a'"b"c`;
+    const result = parseScriptParts(scriptPath);
+    expect(result).toEqual(['node', 'script.js', 'prequoted midpost', 'abc']);
+  });
 });
 
 describe('getFileHashes', () => {
@@ -264,7 +282,7 @@ describe('ScriptCompletionProvider', () => {
   });
 
   it('should handle UTF-8 characters in script output', async () => {
-    const utf8Output = 'Hello, 世界!';
+    const utf8Output = 'Hello, ä¸ç!';
     vi.mocked(execFile).mockImplementation(function (_cmd, _args, _options, callback) {
       (callback as (error: Error | null, stdout: string | Buffer, stderr: string | Buffer) => void)(
         null,
@@ -279,7 +297,7 @@ describe('ScriptCompletionProvider', () => {
   });
 
   it('should handle UTF-8 characters in error output', async () => {
-    const utf8Error = 'エラー発生';
+    const utf8Error = 'ã¨ã©ã¼çºç';
     vi.mocked(execFile).mockImplementation(function (_cmd, _args, _options, callback) {
       if (typeof callback === 'function') {
         callback(null, '', Buffer.from(utf8Error));
