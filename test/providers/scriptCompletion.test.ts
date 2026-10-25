@@ -282,7 +282,7 @@ describe('ScriptCompletionProvider', () => {
   });
 
   it('should handle UTF-8 characters in script output', async () => {
-    const utf8Output = 'Hello, ä¸ç!';
+    const utf8Output = 'Hello, 世界!';
     vi.mocked(execFile).mockImplementation(function (_cmd, _args, _options, callback) {
       (callback as (error: Error | null, stdout: string | Buffer, stderr: string | Buffer) => void)(
         null,
@@ -297,7 +297,7 @@ describe('ScriptCompletionProvider', () => {
   });
 
   it('should handle UTF-8 characters in error output', async () => {
-    const utf8Error = 'ã¨ã©ã¼çºç';
+    const utf8Error = 'エラー発生';
     vi.mocked(execFile).mockImplementation(function (_cmd, _args, _options, callback) {
       if (typeof callback === 'function') {
         callback(null, '', Buffer.from(utf8Error));
