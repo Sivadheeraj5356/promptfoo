@@ -22,12 +22,37 @@ export function stripText(text: string) {
 }
 
 export function parseScriptParts(scriptPath: string): string[] {
-  const scriptPartsRegex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
-  let match;
-  const scriptParts = [];
+  // Shell-like tokenization: whitespace separates tokens, single and double
+  // quotes quote their contents anywhere within a token (quoted sections
+  // concatenate with unquoted ones), and empty quotes yield an empty token.
+  const scriptParts: string[] = [];
+  let current = '';
+  let inToken = false;
+  let quote: '"' | "'" | null = null;
 
-  while ((match = scriptPartsRegex.exec(scriptPath)) !== null) {
-    scriptParts.push(match[1] || match[2] || match[0]);
+  for (const char of scriptPath) {
+    if (quote) {
+      if (char === quote) {
+        quote = null;
+      } else {
+        current += char;
+      }
+    } else if (char === '"' || char === "'") {
+      quote = char;
+      inToken = true;
+    } else if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
+      if (inToken) {
+        scriptParts.push(current);
+        current = '';
+        inToken = false;
+      }
+    } else {
+      current += char;
+      inToken = true;
+    }
+  }
+  if (inToken) {
+    scriptParts.push(current);
   }
 
   return scriptParts;
